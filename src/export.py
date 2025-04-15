@@ -89,18 +89,24 @@ class MarkdownChatFormatter(ChatFormatter):
                         
                         # Selections
                         if "selections" in bubble and bubble["selections"]:
-                            user_text.append(f"[selections]  \n{"\n".join([s["text"] for s in bubble['selections']])}")
-                        
+                            selections_text = '\n'.join([s['text'] for s in bubble['selections']])
+                            user_text.append(f"[selections]  \n{selections_text}")
+
                         # Images
                         if 'image' in bubble and image_dir is not None:
                             image_path = bubble['image']['path']
                             if os.path.exists(image_path):
                                 image_filename = os.path.basename(image_path)
-                                new_image_path = os.path.join(tab_image_dir, image_filename)
                                 tab_image_dir = os.path.join(image_dir, f"tab_{tab_index + 1}") if image_dir else None
                                 if tab_image_dir is not None:
                                     os.makedirs(tab_image_dir, exist_ok=True)
-                                shutil.copy(image_path, new_image_path)
+                                    new_image_path = os.path.join(tab_image_dir, image_filename)
+                                    shutil.copy(image_path, new_image_path)
+                                    user_text.append(f"[image]  \n![User Image]({new_image_path})")
+                                else:
+                                    # Handle case where image_dir is None, maybe log or skip image?
+                                    logger.warning(f"Image directory not specified, skipping image copy for {image_path}")
+                                    user_text.append(f"[image]  \n![User Image]()") # Or maybe omit this line entirely?
                                 user_text.append(f"[image]  \n![User Image]({new_image_path})")
                             else:
                                 logger.error(f"Image file {image_path} not found for tab {tab_index + 1}.")
